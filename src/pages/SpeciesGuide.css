@@ -1,0 +1,125 @@
+.species-header {
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.species-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.species-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.species-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.species-image {
+    height: 220px;
+    background-size: cover;
+    background-position: center;
+}
+
+.species-content {
+    padding: var(--spacing-md);
+}
+
+.species-content h2 {
+    margin-bottom: 0.25rem;
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+}
+
+.scientific-name {
+    font-style: italic;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+    font-family: var(--font-heading);
+}
+
+.species-detail {
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.95rem;
+    color: var(--color-text);
+}
+
+/* Gear Section */
+.gear-section {
+    margin-bottom: var(--spacing-xl);
+    background-color: var(--color-white);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.gear-section h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary-dark);
+}
+
+.gear-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.gear-item {
+    text-align: center;
+    padding: var(--spacing-sm);
+}
+
+.gear-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: var(--spacing-xs);
+}
+
+.gear-item h3 {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text);
+}
+
+.gear-item p {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+}
+
+.regulations-alert {
+    background-color: #FFF8E1;
+    border-left: 5px solid var(--color-accent);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.regulations-alert h3 {
+    color: #B7791F;
+    margin-bottom: var(--spacing-sm);
+}
+
+.regulations-alert ul {
+    list-style: disc;
+    padding-left: var(--spacing-md);
+}
+
+.regulations-alert a {
+    color: #B7791F;
+    text-decoration: underline;
+}
+
+.regulations-alert a:hover {
+    color: #8F5E16;
+}
