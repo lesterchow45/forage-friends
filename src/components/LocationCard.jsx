@@ -1,12 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../services/supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { fetchTides, getTodayDate, getTomorrowDate } from '../services/tides';
+import { fetchWeather } from '../services/weather';
 
 const LocationCard = ({ location }) => {
-  const { id, name, region, image, rating, reviews, catch: catchList, toxin_level, status } = location;
+  const { id, name, region, image, rating, reviews, catch: catchList, toxin_level, status, tide_station_id, weather_grid } = location;
   const [imageError, setImageError] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [tideData, setTideData] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
+  const { user } = useAuth();
 
   const isSafe = toxin_level === 'Safe';
   const isOpen = status === 'Open';
+
+  useEffect(() => {
+    if (user) {
+      checkIfSaved();
+    }
+  }, [user, id]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      // Fetch Tides
+      if (tide_station_id) {
+        const today = getTodayDate();
+        const tomorrow = getTomorrowDate();
+        const tides = await fetchTides(tide_station_id, today, tomorrow);
+        if (tides && tides.length > 0) {
+          // Find the next tide
+          const now = new Date();
+          const nextTide = tides.find(t => new Date(t.t) > now);
+          setTideData(nextTide);
+        }
+      }
+
+      // Fetch Weather
+      if (weather_grid) {
+        // We need lat/lon to get the grid, but we stored the grid directly.
+        // Actually, fetchWeather takes lat/lon.
+        // Let's check if we can use the grid directly or if we need to refactor fetchWeather.
+        // For now, let's use the coordinates from the location object if available.
+        if (location.coordinates) {
+          const [lat, lon] = location.coordinates;
+          const weather = await fetchWeather(lat, lon);
+          if (weather && weather.length > 0) {
+            setWeatherData(weather[0]); // Current period
+          }
+        }
+      }
+    };
+
+    loadData();
+  }, [tide_station_id, location.coordinates]);
+
+  const checkIfSaved = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('saved_locations')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('location_id', id)
+        .single();
+
+      if (data) setIsSaved(true);
+    } catch (error) {
+      // Ignore error if not found (it just means not saved)
+    }
+  };
+
+  const toggleSave = async (e) => {
+    e.preventDefault(); // Prevent navigation
+    if (!user) {
+      alert('Please log in to save locations.');
+      return;
+    }
+
+    if (isSaved) {
+      // Unsave
+      const { error } = await supabase
+        .from('saved_locations')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('location_id', id);
+
+      if (!error) setIsSaved(false);
+    } else {
+      // Save
+      const { error } = await supabase
+        .from('saved_locations')
+        .insert([{ user_id: user.id, location_id: id }]);
+
+      if (!error) setIsSaved(true);
+    }
+  };
 
   return (
     <Link to={`/location/${id}`} className="location-card">
@@ -31,9 +120,16 @@ const LocationCard = ({ location }) => {
           <span className={`toxin-badge ${isSafe ? 'safe' : 'unsafe'}`}>
             {isSafe ? 'Safe' : 'Toxin Alert'}
           </span>
+          {location.regulations?.permitRequired && (
+            <span className="permit-badge">Permit Req.</span>
+          )}
         </div>
-        <div className="card-favorite-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        <div className="card-favorite-btn" onClick={toggleSave}>
+          {isSaved ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          )}
         </div>
       </div>
       <div className="card-content">
@@ -55,6 +151,28 @@ const LocationCard = ({ location }) => {
           <span className="catch-label">Catch:</span>
           <span className="catch-items">{catchList ? catchList.slice(0, 3).join(", ") : 'N/A'}</span>
         </div>
+
+        {/* Real-time Conditions */}
+        {(tideData || weatherData) && (
+          <div className="card-conditions">
+            {tideData && (
+              <div className="condition-item">
+                <span className="condition-icon">🌊</span>
+                <span className="condition-text">
+                  {tideData.type === 'H' ? 'High' : 'Low'} Tide: {new Date(tideData.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            )}
+            {weatherData && (
+              <div className="condition-item">
+                <span className="condition-icon">🌤️</span>
+                <span className="condition-text">
+                  {weatherData.shortForecast}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -117,6 +235,15 @@ const LocationCard = ({ location }) => {
         .status-badge.closed { background-color: var(--color-text-light); }
         .toxin-badge.safe { background-color: #2196F3; }
         .toxin-badge.unsafe { background-color: #e53935; }
+        .permit-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            background-color: #FF9800; /* Orange for warning/info */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
         
         .card-favorite-btn {
           position: absolute;
@@ -186,6 +313,29 @@ const LocationCard = ({ location }) => {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+        .card-conditions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .condition-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+        }
+        .condition-icon {
+            font-size: 1rem;
+        }
+        .condition-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
       `}</style>
     </Link>

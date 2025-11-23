@@ -43,13 +43,65 @@ const MapEvents = ({ setBounds }) => {
   return null;
 };
 
+// Dropdown Filter Component
+const FilterDropdown = ({ label, options, activeValue, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="filter-dropdown" ref={dropdownRef}>
+      <button
+        className={`filter-btn ${activeValue !== 'All' ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {label}: {activeValue === 'All' ? 'Any' : activeValue}
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {isOpen && (
+        <div className="dropdown-menu">
+          <div
+            className={`dropdown-item ${activeValue === 'All' ? 'selected' : ''}`}
+            onClick={() => { onChange('All'); setIsOpen(false); }}
+          >
+            Any
+          </div>
+          {options.map(option => (
+            <div
+              key={option}
+              className={`dropdown-item ${activeValue === option ? 'selected' : ''}`}
+              onClick={() => { onChange(option); setIsOpen(false); }}
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Explore = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredLocation, setHoveredLocation] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('All');
   const [mapBounds, setMapBounds] = useState(null);
   const markerRefs = useRef({});
+  const hoverTimeoutRef = useRef(null);
+
+  // Filter States
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [seasonFilter, setSeasonFilter] = useState('All');
+  const [ratingFilter, setRatingFilter] = useState('All');
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -75,25 +127,17 @@ const Explore = () => {
     if (hoveredLocation && markerRefs.current[hoveredLocation]) {
       markerRefs.current[hoveredLocation].openPopup();
     } else {
-      // Close all popups when not hovering (or we could track the last one)
-      // Since we only open one via hover, we can just close the one that was open if we knew it.
-      // But simpler: iterate or just rely on the fact that opening a new one closes the old one.
-      // To close when unhovering *everything*, we need to know which one was open.
-      // Let's iterate markerRefs to close them is safe enough for this scale, or better:
-      // We can't easily know which one is open without tracking.
-      // Let's assume the user wants the map to clear when they move mouse away.
       Object.values(markerRefs.current).forEach(marker => marker && marker.closePopup());
     }
   }, [hoveredLocation]);
 
   const filteredLocations = locations.filter(location => {
-    // First apply category filters
-    let matchesFilter = true;
-    if (activeFilter === 'Safe') matchesFilter = location.toxin_level === 'Safe';
-    if (activeFilter === 'Low Tide') matchesFilter = location.tidal_status === 'Low Tide';
-    if (activeFilter === 'Open') matchesFilter = location.status === 'Open';
+    // Apply Dropdown Filters
+    let matchesStatus = statusFilter === 'All' || location.status === statusFilter;
+    let matchesSeason = seasonFilter === 'All' || location.best_season === seasonFilter;
+    let matchesRating = ratingFilter === 'All' || location.rating >= parseFloat(ratingFilter);
 
-    // Then apply map bounds filter
+    // Apply Map Bounds Filter
     let matchesBounds = true;
     if (mapBounds && location.coordinates) {
       const lat = location.coordinates[0];
@@ -101,69 +145,16 @@ const Explore = () => {
       matchesBounds = mapBounds.contains([lat, lng]);
     }
 
-    return matchesFilter && matchesBounds;
+    return matchesStatus && matchesSeason && matchesRating && matchesBounds;
   });
 
   return (
     <div className="explore-page">
-      <div className="explore-sidebar">
-        <div className="sidebar-header">
-          <h1>Explore Coast</h1>
-          <div className="filters">
-            <button
-              className={`filter-btn ${activeFilter === 'All' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('All')}
-            >
-              All
-            </button>
-            <button
-              className={`filter-btn ${activeFilter === 'Safe' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('Safe')}
-            >
-              Safe (Toxins)
-            </button>
-            <button
-              className={`filter-btn ${activeFilter === 'Low Tide' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('Low Tide')}
-            >
-              Low Tide
-            </button>
-            <button
-              className={`filter-btn ${activeFilter === 'Open' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('Open')}
-            >
-              Open Now
-            </button>
-          </div>
-          <div className="results-count">
-            {filteredLocations.length} results in view
-          </div>
-        </div>
-        <div className="locations-list">
-          {filteredLocations.length > 0 ? (
-            filteredLocations.map(location => (
-              <div
-                key={location.id}
-                className="list-item"
-                onMouseEnter={() => setHoveredLocation(location.id)}
-                onMouseLeave={() => setHoveredLocation(null)}
-              >
-                <LocationCard location={location} />
-              </div>
-            ))
-          ) : (
-            <div className="no-results">
-              <p>No locations found in this area.</p>
-              <p>Try zooming out or panning the map.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* Full Screen Map */}
       <div className="explore-map">
         <MapContainer
-          center={[39.8283, -98.5795]}
-          zoom={4}
+          center={[38.3, -123.0]} // Centered roughly on Bodega Bay/NorCal coast for demo
+          zoom={8}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
         >
@@ -179,7 +170,16 @@ const Explore = () => {
               opacity={hoveredLocation === location.id ? 1 : 0.8}
               ref={el => markerRefs.current[location.id] = el}
               eventHandlers={{
-                mouseover: (e) => e.target.openPopup(),
+                mouseover: (e) => {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                    e.target.openPopup();
+                  }, 500);
+                },
+                mouseout: () => {
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                  }
+                }
               }}
             >
               <Popup>
@@ -199,75 +199,206 @@ const Explore = () => {
         </MapContainer>
       </div>
 
+      {/* Floating Sidebar Panel */}
+      <div className="floating-sidebar">
+        <div className="sidebar-header">
+          <h1>Explore Coast</h1>
+          <div className="filters-row">
+            <FilterDropdown
+              label="Status"
+              options={['Open', 'Closed']}
+              activeValue={statusFilter}
+              onChange={setStatusFilter}
+            />
+            <FilterDropdown
+              label="Season"
+              options={['Winter', 'Spring', 'Summer', 'Fall']}
+              activeValue={seasonFilter}
+              onChange={setSeasonFilter}
+            />
+            <FilterDropdown
+              label="Rating"
+              options={['4.5', '4.0', '3.5']}
+              activeValue={ratingFilter}
+              onChange={setRatingFilter}
+            />
+          </div>
+          <div className="results-count">
+            {filteredLocations.length} results in view
+          </div>
+        </div>
+
+        <div className="locations-list">
+          {filteredLocations.length > 0 ? (
+            filteredLocations.map(location => (
+              <div
+                key={location.id}
+                className="list-item"
+                onMouseEnter={() => setHoveredLocation(location.id)}
+                onMouseLeave={() => setHoveredLocation(null)}
+              >
+                <LocationCard location={location} />
+              </div>
+            ))
+          ) : (
+            <div className="no-results">
+              <p>No locations found.</p>
+              <p className="sub-text">Try adjusting filters or moving the map.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <style>{`
         .explore-page {
-          display: flex;
+          position: relative;
           height: calc(100vh - var(--header-height));
           overflow: hidden;
+          background: #f5f5f5;
         }
-        .explore-sidebar {
-          width: 45%;
-          max-width: 600px;
+
+        /* Full Screen Map */
+        .explore-map {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 0;
+        }
+
+        /* Floating Sidebar */
+        .floating-sidebar {
+          position: absolute;
+          top: 24px;
+          left: 24px;
+          bottom: 24px;
+          width: 480px;
           background: white;
+          border-radius: 24px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          z-index: 1000;
           display: flex;
           flex-direction: column;
-          border-right: 1px solid var(--color-border);
-          z-index: 10;
+          overflow: hidden;
         }
+
         .sidebar-header {
-          padding: 20px 24px;
+          padding: 24px;
           border-bottom: 1px solid var(--color-border);
           background: white;
+          z-index: 10;
         }
-        .filters {
+
+        .sidebar-header h1 {
+          font-size: 1.5rem;
+          margin-bottom: 16px;
+        }
+
+        .filters-row {
           display: flex;
           gap: 8px;
-          margin-top: 16px;
+          flex-wrap: nowrap;
           overflow-x: auto;
           padding-bottom: 4px;
+          /* Hide scrollbar */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
+        .filters-row::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Dropdown Styles */
+        .filter-dropdown {
+          position: relative;
+        }
+        
         .filter-btn {
-          padding: 6px 12px;
+          padding: 8px 16px;
           border-radius: 20px;
           border: 1px solid var(--color-border);
           background: white;
           font-size: 0.9rem;
+          font-weight: 500;
           cursor: pointer;
-          white-space: nowrap;
+          display: flex;
+          align-items: center;
           transition: all 0.2s;
         }
+        
         .filter-btn:hover {
-          background: var(--color-surface);
+          background: #f5f5f5;
+          border-color: #ccc;
         }
+        
         .filter-btn.active {
-          background: var(--color-primary);
-          color: white;
+          background: #e3f2fd;
+          color: var(--color-primary);
           border-color: var(--color-primary);
         }
+
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          margin-top: 8px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+          min-width: 160px;
+          padding: 8px 0;
+          z-index: 1001;
+        }
+
+        .dropdown-item {
+          padding: 8px 16px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+          background: #f5f5f5;
+        }
+
+        .dropdown-item.selected {
+          color: var(--color-primary);
+          font-weight: 600;
+          background: #e3f2fd;
+        }
+
         .results-count {
-          margin-top: 12px;
+          margin-top: 16px;
           font-size: 0.85rem;
           color: var(--color-text-light);
         }
+
+        /* List */
         .locations-list {
           flex: 1;
           overflow-y: auto;
           padding: 24px;
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          display: flex;
+          flex-direction: column;
           gap: 24px;
-          align-content: start;
         }
+
+        .list-item {
+          /* Ensure cards don't stretch weirdly */
+        }
+
         .no-results {
-          grid-column: 1 / -1;
           text-align: center;
           padding: 48px 0;
           color: var(--color-text-light);
         }
-        .explore-map {
-          flex: 1;
-          background: #e0e0e0;
+        .sub-text {
+          font-size: 0.9rem;
+          margin-top: 8px;
         }
+
+        /* Map Popup Styles */
         .map-popup {
           width: 200px;
         }
@@ -311,18 +442,17 @@ const Explore = () => {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        
+
         @media (max-width: 768px) {
-          .explore-page {
-            flex-direction: column;
-          }
-          .explore-sidebar {
+          .floating-sidebar {
+            position: absolute;
+            top: auto;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
-            height: 50%;
-            max-width: none;
-          }
-          .explore-map {
-            height: 50%;
+            height: 50vh;
+            border-radius: 24px 24px 0 0;
           }
         }
       `}</style>

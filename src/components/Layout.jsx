@@ -22,9 +22,16 @@ const Layout = () => {
     <div className="app-container">
       <nav className={`navbar ${isHome ? 'transparent' : ''}`}>
         <div className="container navbar-content">
-          <Link to="/" className="logo">
-            Forage Friends
-          </Link>
+          <div className="nav-brand">
+            <Link to="/">Forage Friends</Link>
+          </div>
+
+          <div className="nav-search">
+            <div className="search-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" placeholder="Search locations, species..." />
+            </div>
+          </div>
 
           <div className="nav-links">
             <Link to="/explore" className="nav-item">Explore</Link>

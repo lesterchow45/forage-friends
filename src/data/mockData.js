@@ -13,7 +13,14 @@ export const locations = [
         bestSeason: "Winter",
         description: "A premier spot for tide pooling and foraging. Famous for its purple sea urchins and abundant mussel beds accessible during negative tides.",
         coordinates: [37.4957, -122.4996],
-        tags: ["Tide Pools", "Shellfish", "Beginner Friendly"]
+        tags: ["Tide Pools", "Shellfish", "Beginner Friendly"],
+        tideStationId: "9414131",
+        weatherGrid: { id: "MTR", x: 79, y: 93 },
+        regulations: {
+            text: "Partially within Pillar Point SMCA and Montara SMR. No collecting in tide pools (Montara SMR). Limited take in SMCA. Check MPA boundaries carefully.",
+            url: "https://wildlife.ca.gov/Conservation/Marine/MPAs",
+            permitRequired: true
+        }
     },
     {
         id: 2,
@@ -93,7 +100,14 @@ export const locations = [
         bestSeason: "Winter",
         description: "A popular spot for crabbing off the jetty and clamming in the mudflats. Currently closed due to domoic acid.",
         coordinates: [38.3333, -123.0481],
-        tags: ["Crabbing", "Jetty", "Closed"]
+        tags: ["Crabbing", "Jetty", "Closed"],
+        tideStationId: "9415625",
+        weatherGrid: { id: "MTR", x: 68, y: 134 },
+        regulations: {
+            text: "Valid fishing license required. Annual mussel quarantine (May-Oct). Dungeness crab viscera advisory due to domoic acid.",
+            url: "https://wildlife.ca.gov/Fishing/Ocean/Regulations/Sport-Fishing",
+            permitRequired: true
+        }
     },
     {
         id: 7,
@@ -126,6 +140,144 @@ export const locations = [
         description: "A pristine wilderness offering some of the best cold-water foraging in the world.",
         coordinates: [59.6126, -151.4256],
         tags: ["Wilderness", "Cold Water", "Abundant"]
+    },
+    {
+        id: 9,
+        name: "Fort Bragg: Noyo Harbor",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1605218457336-92748b692929?auto=format&fit=crop&w=800&q=80",
+        rating: 4.7,
+        reviews: 320,
+        catch: ["Mushrooms", "Seaweed", "Urchin"],
+        tidalStatus: "Variable",
+        toxinLevel: "Safe",
+        status: "Open",
+        bestSeason: "Fall",
+        description: "Gateway to the Mendocino coast. Famous for mushroom foraging in nearby forests and seaweed harvesting.",
+        coordinates: [39.4272, -123.8053],
+        tags: ["Mushrooms", "Forest", "Seaweed"],
+        tideStationId: "9417426",
+        weatherGrid: { id: "EKA", x: 61, y: 44 },
+        regulations: {
+            text: "Abalone fishery closed until 2026. Mushroom permits required in Jackson State Forest.",
+            url: "https://wildlife.ca.gov/Fishing/Ocean/Regulations/Sport-Fishing",
+            permitRequired: true
+        }
+    },
+    {
+        id: 10,
+        name: "Shelter Cove",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1494791368093-85217fbbf8de?auto=format&fit=crop&w=800&q=80",
+        rating: 4.8,
+        reviews: 150,
+        catch: ["Rockfish", "Seaweed"],
+        tidalStatus: "Low Tide",
+        toxinLevel: "Caution",
+        status: "Restricted",
+        bestSeason: "Summer",
+        description: "Remote 'Lost Coast' location. rugged beauty and rich marine life.",
+        coordinates: [40.0254, -124.0673],
+        tags: ["Remote", "Rockfish", "Adventure"],
+        tideStationId: "9418024",
+        weatherGrid: { id: "EKA", x: 58, y: 73 },
+        regulations: {
+            text: "Dungeness crab closed (Nov 2025). Salmon closed. Check local rockfish regulations.",
+            url: "https://wildlife.ca.gov/Fishing/Ocean/Regulations/Sport-Fishing",
+            permitRequired: true
+        }
+    },
+    {
+        id: 11,
+        name: "Monterey Harbor",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1559526324-593bc8142713?auto=format&fit=crop&w=800&q=80",
+        rating: 4.9,
+        reviews: 2500,
+        catch: ["Jade", "Kelp"],
+        tidalStatus: "Moderate",
+        toxinLevel: "Safe",
+        status: "Restricted",
+        bestSeason: "Year-round",
+        description: "Heart of the Marine Sanctuary. Foraging is heavily restricted, but jade collection is allowed in specific zones.",
+        coordinates: [36.6022, -121.8894],
+        tags: ["Sanctuary", "Jade", "Scenic"],
+        tideStationId: "9413450",
+        weatherGrid: { id: "MTR", x: 93, y: 50 },
+        regulations: {
+            text: "MBNMS protected. Strict 'no take' in many areas. Jade collection allowed in designated zones only.",
+            url: "https://montereybay.noaa.gov/",
+            permitRequired: false
+        }
+    },
+    {
+        id: 12,
+        name: "Morro Bay",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1520483601560-389dff434fdf?auto=format&fit=crop&w=800&q=80",
+        rating: 4.6,
+        reviews: 600,
+        catch: ["Pismo Clams"],
+        tidalStatus: "Low Tide",
+        toxinLevel: "Safe",
+        status: "Restricted",
+        bestSeason: "Winter",
+        description: "Iconic rock and bay. Clamming is prohibited in the reserve but allowed in adjacent areas.",
+        coordinates: [35.3658, -120.8499],
+        tags: ["Clams", "Bay", "Protected"],
+        tideStationId: "9412110",
+        weatherGrid: { id: "LOX", x: 72, y: 119 },
+        regulations: {
+            text: "Morro Bay SMR/SMRMA prohibits clamming. Pismo clams allowed in adjacent areas with license.",
+            url: "https://wildlife.ca.gov/Conservation/Marine/MPAs",
+            permitRequired: true
+        }
+    },
+    {
+        id: 13,
+        name: "Malibu: Point Dume",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1564686288863-7c87c0628795?auto=format&fit=crop&w=800&q=80",
+        rating: 4.8,
+        reviews: 1100,
+        catch: ["Finfish"],
+        tidalStatus: "High Tide",
+        toxinLevel: "Safe",
+        status: "Restricted",
+        bestSeason: "Summer",
+        description: "Beautiful bluffs and beaches. Part of a State Marine Reserve, so take is very limited.",
+        coordinates: [34.0011, -118.8066],
+        tags: ["MPA", "Scenic", "Hiking"],
+        tideStationId: "9410840",
+        weatherGrid: { id: "LOX", x: 134, y: 46 },
+        regulations: {
+            text: "Point Dume SMR (No take). SMCA allows limited spearfishing. Check boundaries.",
+            url: "https://wildlife.ca.gov/Conservation/Marine/MPAs",
+            permitRequired: true
+        }
+    },
+    {
+        id: 14,
+        name: "La Jolla: Scripps Pier",
+        region: "California",
+        image: "https://images.unsplash.com/photo-1565896311032-785691497134?auto=format&fit=crop&w=800&q=80",
+        rating: 5.0,
+        reviews: 3000,
+        catch: ["None"],
+        tidalStatus: "Low Tide",
+        toxinLevel: "Safe",
+        status: "Observation Only",
+        bestSeason: "Winter",
+        description: "World-famous tide pools. Strictly a 'look, don't touch' Ecological Reserve.",
+        coordinates: [32.8669, -117.2544],
+        tags: ["Tide Pools", "Observation", "Reserve"],
+        tideStationId: "9410230",
+        weatherGrid: { id: "SGX", x: 54, y: 21 },
+        regulations: {
+            text: "Ecological Reserve. Strict 'No Take' policy. Do not touch or collect anything.",
+            url: "https://wildlife.ca.gov/Lands/Places-to-Visit/La-Jolla-Ecological-Reserve",
+            permitRequired: false
+        }
     }
 ];
 

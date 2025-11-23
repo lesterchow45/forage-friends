@@ -8,6 +8,7 @@ import SpeciesGuide from './pages/SpeciesGuide';
 import LocationDetails from './pages/LocationDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Saved from './pages/Saved';
 
 function App() {
   return (
@@ -21,8 +22,7 @@ function App() {
             <Route path="location/:id" element={<LocationDetails />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
-            {/* Fallback for saved route */}
-            <Route path="saved" element={<div className="container" style={{ padding: '40px' }}>Saved Locations (Coming Soon)</div>} />
+            <Route path="saved" element={<Saved />} />
           </Route>
         </Routes>
       </Router>
