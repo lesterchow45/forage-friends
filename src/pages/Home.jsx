@@ -4,11 +4,36 @@ import LocationCard from '../components/LocationCard';
 import { supabase } from '../services/supabaseClient';
 
 const Home = () => {
+  const [locationName, setLocationName] = useState('Coastal Spots');
   const [featuredLocations, setFeaturedLocations] = useState([]);
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Request user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await response.json();
+
+            // Extract city or town
+            const city = data.address.city || data.address.town || data.address.village || data.address.county;
+            if (city) {
+              setLocationName(city);
+            }
+          } catch (error) {
+            console.error('Error fetching location name:', error);
+          }
+        },
+        (error) => {
+          console.log('Geolocation permission denied or error:', error);
+        }
+      );
+    }
+
     const fetchData = async () => {
       try {
         const { data: locationsData, error: locationsError } = await supabase
@@ -45,7 +70,7 @@ const Home = () => {
 
       <section className="section container">
         <div className="section-header">
-          <h2>Trending Coastal Spots</h2>
+          <h2>Trending foraging spots near {locationName}</h2>
           <a href="/explore" className="view-all">View all</a>
         </div>
         <div className="grid grid-cols-4 gap-md">
