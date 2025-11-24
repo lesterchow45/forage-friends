@@ -40,28 +40,30 @@ const LocationDetails = () => {
 
         if (error) throw error;
         setLocation(data);
+        setLoading(false); // Show location immediately
 
-        // Fetch Real-time Data
+        // Fetch Real-time Data in background
         if (data) {
           // Tides
           if (data.tide_station_id) {
             const today = getTodayDate();
             const tomorrow = getTomorrowDate();
-            const tideData = await fetchTides(data.tide_station_id, today, tomorrow);
-            setTides(tideData);
+            fetchTides(data.tide_station_id, today, tomorrow)
+              .then(tideData => setTides(tideData))
+              .catch(err => console.error('Error fetching tides:', err));
           }
 
           // Weather
           if (data.coordinates) {
             const [lat, lon] = data.coordinates;
-            const weatherData = await fetchWeather(lat, lon);
-            setWeather(weatherData);
+            fetchWeather(lat, lon)
+              .then(weatherData => setWeather(weatherData))
+              .catch(err => console.error('Error fetching weather:', err));
           }
         }
 
       } catch (error) {
         console.error('Error fetching location:', error);
-      } finally {
         setLoading(false);
       }
     };
@@ -156,6 +158,12 @@ const LocationDetails = () => {
                 <span className="permit-badge">Permit Required</span>
               </>
             )}
+            {location.is_public_pier && (
+              <>
+                <span className="separator">•</span>
+                <span className="pier-badge">No License Req.</span>
+              </>
+            )}
             <span className="separator">•</span>
             <span className="meta-text">Best: {location.best_season}</span>
             <span className="separator">•</span>
@@ -193,6 +201,12 @@ const LocationDetails = () => {
               )}
               {isSaved ? 'Saved' : 'Save'}
             </button>
+            {location.phone_number && (
+              <a href={`tel:${location.phone_number}`} className="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                Call
+              </a>
+            )}
           </div>
 
           <section className="detail-section">
@@ -311,6 +325,17 @@ const LocationDetails = () => {
             <a href={`https://www.google.com/maps/search/?api=1&query=${location.coordinates[0]},${location.coordinates[1]}`} target="_blank" rel="noreferrer" className="directions-btn btn btn-primary">
               Get Directions
             </a>
+          </div>
+
+          <div className="detail-section">
+            <h2>About this Location</h2>
+            <p>{location.description}</p>
+            {location.access_notes && (
+              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', borderLeft: '4px solid var(--color-primary)' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>📍 Getting There</h4>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>{location.access_notes}</p>
+              </div>
+            )}
           </div>
 
           <div className="sidebar-widget">
@@ -439,6 +464,14 @@ const LocationDetails = () => {
           font-size: 0.8rem;
           background-color: #fff3cd;
           color: #856404;
+        }
+        .pier-badge {
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-weight: 600;
+          font-size: 0.8rem;
+          background-color: #d1e7dd;
+          color: #0f5132;
         }
         .meta-text {
           font-weight: 500;

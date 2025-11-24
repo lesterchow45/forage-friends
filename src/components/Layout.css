@@ -54,7 +54,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.search-icon {
+.nav-search-icon {
     position: absolute;
     left: 14px;
     top: 50%;
@@ -143,6 +143,15 @@
     .nav-links {
         display: none;
         /* Mobile menu to be implemented */
+    }
+
+    .nav-search {
+        margin: 0 16px;
+    }
+
+    .search-wrapper input {
+        font-size: 16px;
+        /* Prevent zoom on iOS */
     }
 
     .footer-grid {
