@@ -24,7 +24,7 @@ const Layout = () => {
         <div className="container navbar-content">
           <div className="nav-brand">
             <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-              <img src="/logo.png" alt="Forager Path Logo" style={{ height: '40px', width: 'auto' }} />
+              <img src="/logo.png" alt="Forager Path Logo" style={{ height: '56px', width: 'auto' }} />
               <span style={{ color: 'var(--color-primary)' }}>Forager Path</span>
             </Link>
           </div>
