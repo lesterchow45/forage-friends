@@ -9,6 +9,10 @@ import LocationDetails from './pages/LocationDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Saved from './pages/Saved';
+import Guides from './pages/Guides';
+import GuideDetails from './pages/GuideDetails';
+import Foraging101 from './pages/Foraging101';
+import Gear from './pages/Gear';
 
 function App() {
   return (
@@ -23,6 +27,10 @@ function App() {
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
             <Route path="saved" element={<Saved />} />
+            <Route path="guides" element={<Guides />} />
+            <Route path="guide/:id" element={<GuideDetails />} />
+            <Route path="foraging-101" element={<Foraging101 />} />
+            <Route path="gear" element={<Gear />} />
           </Route>
         </Routes>
       </Router>

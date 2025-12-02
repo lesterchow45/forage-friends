@@ -76,8 +76,8 @@ async function updateLocations() {
     console.log('Fetching locations...');
     const { data: locations, error } = await supabase
         .from('locations')
-        .select('id, name, noaa_station_id')
-        .not('noaa_station_id', 'is', null);
+        .select('id, name, tide_station_id')
+        .not('tide_station_id', 'is', null);
 
     if (error) {
         console.error('Supabase error:', error);
@@ -87,8 +87,8 @@ async function updateLocations() {
     console.log(`Found ${locations.length} locations with NOAA stations.`);
 
     for (const loc of locations) {
-        console.log(`Updating ${loc.name} (${loc.noaa_station_id})...`);
-        const predictions = await getTideData(loc.noaa_station_id);
+        console.log(`Updating ${loc.name} (${loc.tide_station_id})...`);
+        const predictions = await getTideData(loc.tide_station_id);
 
         if (predictions) {
             const status = determineTidalStatus(predictions);
@@ -98,7 +98,7 @@ async function updateLocations() {
                 .from('locations')
                 .update({
                     tidal_status: status,
-                    last_updated: new Date().toISOString()
+                    // last_updated: new Date().toISOString() // Schema might not have this column yet, check before adding
                 })
                 .eq('id', loc.id);
 

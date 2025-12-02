@@ -102,6 +102,7 @@ const Explore = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [seasonFilter, setSeasonFilter] = useState('All');
   const [ratingFilter, setRatingFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -136,6 +137,7 @@ const Explore = () => {
     let matchesStatus = statusFilter === 'All' || location.status === statusFilter;
     let matchesSeason = seasonFilter === 'All' || location.best_season === seasonFilter;
     let matchesRating = ratingFilter === 'All' || location.rating >= parseFloat(ratingFilter);
+    let matchesType = typeFilter === 'All' || (location.tags && location.tags.includes(typeFilter));
 
     // Apply Map Bounds Filter
     let matchesBounds = true;
@@ -145,7 +147,7 @@ const Explore = () => {
       matchesBounds = mapBounds.contains([lat, lng]);
     }
 
-    return matchesStatus && matchesSeason && matchesRating && matchesBounds;
+    return matchesStatus && matchesSeason && matchesRating && matchesBounds && matchesType;
   });
 
   return (
@@ -209,6 +211,12 @@ const Explore = () => {
               options={['Open', 'Closed']}
               activeValue={statusFilter}
               onChange={setStatusFilter}
+            />
+            <FilterDropdown
+              label="Type"
+              options={['Coastal Foraging', 'Land Foraging']}
+              activeValue={typeFilter}
+              onChange={setTypeFilter}
             />
             <FilterDropdown
               label="Season"

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import LocationCard from '../components/LocationCard';
 import { supabase } from '../services/supabaseClient';
 
 const Home = () => {
-  const [locationName, setLocationName] = useState('Coastal Spots');
+  const [locationName, setLocationName] = useState(null);
   const [featuredLocations, setFeaturedLocations] = useState([]);
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ const Home = () => {
 
       <section className="section container">
         <div className="section-header">
-          <h2>Trending foraging spots near {locationName}</h2>
+          <h2>Trending foraging spots{locationName ? ` near ${locationName}` : ''}</h2>
           <a href="/explore" className="view-all">View all</a>
         </div>
         <div className="grid grid-cols-4 gap-md">
@@ -87,16 +88,18 @@ const Home = () => {
         </div>
         <div className="grid grid-cols-3 gap-md">
           {guides.map(guide => (
-            <div key={guide.id} className="guide-card">
-              <div className="guide-image">
-                <img src={guide.image} alt={guide.title} />
+            <Link key={guide.id} to={`/guide/${guide.id}`} className="guide-card-link">
+              <div className="guide-card">
+                <div className="guide-image">
+                  <img src={guide.image} alt={guide.title} />
+                </div>
+                <div className="guide-content">
+                  <span className="guide-meta">{guide.read_time} • {guide.author}</span>
+                  <h3>{guide.title}</h3>
+                  <p>{guide.excerpt}</p>
+                </div>
               </div>
-              <div className="guide-content">
-                <span className="guide-meta">{guide.read_time} • {guide.author}</span>
-                <h3>{guide.title}</h3>
-                <p>{guide.excerpt}</p>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -108,7 +111,7 @@ const Home = () => {
         .section-header {
           display: flex;
           justify-content: space-between;
-          align-items: baseline;
+          align-items: flex-end;
           margin-bottom: 24px;
         }
         .view-all {

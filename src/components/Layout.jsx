@@ -41,7 +41,10 @@ const Layout = () => {
           <div className="nav-links">
             <Link to="/explore" className="nav-item">Explore</Link>
             <Link to="/saved" className="nav-item">Saved</Link>
+            <Link to="/guides" className="nav-item">Guides</Link>
             <Link to="/species" className="nav-item">Species</Link>
+            <Link to="/foraging-101" className="nav-item">Foraging 101</Link>
+            <Link to="/gear" className="nav-item">Gear</Link>
             <div className="nav-divider"></div>
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -110,3 +113,4 @@ const Layout = () => {
 };
 
 export default Layout;
+

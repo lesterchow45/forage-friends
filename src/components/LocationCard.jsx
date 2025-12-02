@@ -123,6 +123,12 @@ const LocationCard = ({ location }) => {
           {location.regulations?.permitRequired && (
             <span className="permit-badge">Permit Req.</span>
           )}
+          {location.tags?.includes('Coastal Foraging') && (
+            <span className="type-badge coastal">Coastal</span>
+          )}
+          {location.tags?.includes('Land Foraging') && (
+            <span className="type-badge land">Land</span>
+          )}
         </div>
         <div className="card-favorite-btn" onClick={toggleSave}>
           {isSaved ? (
@@ -148,7 +154,7 @@ const LocationCard = ({ location }) => {
         </div>
 
         <div className="card-catch">
-          <span className="catch-label">Catch:</span>
+          <span className="catch-label">Harvest:</span>
           <span className="catch-items">{catchList ? catchList.slice(0, 3).join(", ") : 'N/A'}</span>
         </div>
 
@@ -244,6 +250,16 @@ const LocationCard = ({ location }) => {
             background-color: #FF9800; /* Orange for warning/info */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .type-badge.coastal { background-color: #00897B; } /* Teal */
+        .type-badge.land { background-color: #558B2F; } /* Green */
         
         .card-favorite-btn {
           position: absolute;
