@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { supabase } from '../services/supabaseClient';
+import { getLocation } from '../services/dataService';
 import { fetchTides, getTodayDate, getTomorrowDate } from '../services/tides';
 import { fetchWeather } from '../services/weather';
 import { useAuth } from '../context/AuthContext';
@@ -32,13 +33,7 @@ const LocationDetails = () => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
+        const { data } = await getLocation(id);
         setLocation(data);
         setLoading(false); // Show location immediately
 
@@ -72,25 +67,19 @@ const LocationDetails = () => {
   }, [id]);
 
   useEffect(() => {
-    if (user && id) {
-      checkIfSaved();
-    }
-  }, [user, id]);
-
-  const checkIfSaved = async () => {
-    try {
+    if (!user || !id) return;
+    const checkIfSaved = async () => {
       const { data } = await supabase
         .from('saved_locations')
         .select('*')
         .eq('user_id', user.id)
         .eq('location_id', id)
-        .single();
+        .maybeSingle();
 
       if (data) setIsSaved(true);
-    } catch (error) {
-      // Ignore
-    }
-  };
+    };
+    checkIfSaved().catch(() => { /* not saved or offline */ });
+  }, [user, id]);
 
   const toggleSave = async () => {
     if (!user) {
@@ -147,7 +136,7 @@ const LocationDetails = () => {
               <span className="count">({location.reviews} reviews)</span>
             </div>
             <span className="separator">•</span>
-            <span className={`status-badge ${location.status.toLowerCase()}`}>{location.status}</span>
+            <span className={`status-badge ${(location.status || '').toLowerCase().replace(/\s+/g, '-')}`}>{location.status}</span>
             <span className="separator">•</span>
             <span className={`toxin-badge ${isSafe ? 'safe' : 'unsafe'}`}>
               {isSafe ? 'Safe' : 'Toxin Alert'}
@@ -175,7 +164,16 @@ const LocationDetails = () => {
       {/* Hero Image Section */}
       <div className="container">
         <div className="location-hero-container">
-          <img src={location.image || "/coastal_hero.png"} alt={location.name} className="hero-image" />
+          <img
+            src={location.image || "/coastal_hero.png"}
+            alt={location.name}
+            className="hero-image"
+            onError={(e) => {
+              if (!e.currentTarget.src.endsWith('/coastal_hero.png')) {
+                e.currentTarget.src = '/coastal_hero.png';
+              }
+            }}
+          />
           <button className="photo-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
             Photos
@@ -212,7 +210,7 @@ const LocationDetails = () => {
           <section className="detail-section">
             <p className="description">{location.description}</p>
             <div className="tags">
-              {location.tags.map(tag => (
+              {(location.tags || []).map(tag => (
                 <span key={tag} className="tag">{tag}</span>
               ))}
             </div>
@@ -442,6 +440,14 @@ const LocationDetails = () => {
         .status-badge.closed {
           background-color: #fce8e6;
           color: #d93025;
+        }
+        .status-badge.restricted {
+          background-color: #fff3cd;
+          color: #856404;
+        }
+        .status-badge.observation-only {
+          background-color: #e3f2fd;
+          color: #1565c0;
         }
         .toxin-badge {
           padding: 2px 8px;

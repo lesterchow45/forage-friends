@@ -17,9 +17,18 @@ const LocationCard = ({ location }) => {
   const isOpen = status === 'Open';
 
   useEffect(() => {
-    if (user) {
-      checkIfSaved();
-    }
+    if (!user) return;
+    const checkIfSaved = async () => {
+      const { data } = await supabase
+        .from('saved_locations')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('location_id', id)
+        .maybeSingle();
+
+      if (data) setIsSaved(true);
+    };
+    checkIfSaved().catch(() => { /* not saved or offline */ });
   }, [user, id]);
 
   useEffect(() => {
@@ -54,22 +63,7 @@ const LocationCard = ({ location }) => {
     };
 
     loadData();
-  }, [tide_station_id, location.coordinates]);
-
-  const checkIfSaved = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('saved_locations')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('location_id', id)
-        .single();
-
-      if (data) setIsSaved(true);
-    } catch (error) {
-      // Ignore error if not found (it just means not saved)
-    }
-  };
+  }, [tide_station_id, weather_grid, location.coordinates]);
 
   const toggleSave = async (e) => {
     e.preventDefault(); // Prevent navigation
@@ -114,8 +108,8 @@ const LocationCard = ({ location }) => {
         )}
 
         <div className="card-badges">
-          <span className={`status-badge ${isOpen ? 'open' : 'closed'}`}>
-            {isOpen ? 'Open' : 'Closed'}
+          <span className={`status-badge ${isOpen ? 'open' : status === 'Closed' ? 'closed' : 'restricted'}`}>
+            {status || 'Unknown'}
           </span>
           <span className={`toxin-badge ${isSafe ? 'safe' : 'unsafe'}`}>
             {isSafe ? 'Safe' : 'Toxin Alert'}
@@ -225,8 +219,10 @@ const LocationCard = ({ location }) => {
           position: absolute;
           top: 10px;
           left: 10px;
+          right: 50px;
           display: flex;
-          gap: 8px;
+          flex-wrap: wrap;
+          gap: 6px;
           z-index: 2;
         }
         .status-badge, .toxin-badge {
@@ -238,7 +234,8 @@ const LocationCard = ({ location }) => {
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .status-badge.open { background-color: var(--color-primary); }
-        .status-badge.closed { background-color: var(--color-text-light); }
+        .status-badge.closed { background-color: #c62828; }
+        .status-badge.restricted { background-color: #ef8c00; }
         .toxin-badge.safe { background-color: #2196F3; }
         .toxin-badge.unsafe { background-color: #e53935; }
         .permit-badge {

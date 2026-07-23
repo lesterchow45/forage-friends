@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '../services/supabaseClient';
+import { getGuide, getGuides } from '../services/dataService';
 
 const GuideDetails = () => {
   const { id } = useParams();
@@ -21,13 +21,8 @@ const GuideDetails = () => {
   useEffect(() => {
     const fetchGuide = async () => {
       try {
-        const { data, error } = await supabase
-          .from('guides')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
+        const { data } = await getGuide(id);
+        if (!data) throw new Error('Guide not found');
         setGuide(data);
 
         // Parse content, generate TOC, and inject IDs safely
@@ -56,13 +51,8 @@ const GuideDetails = () => {
         }
 
         // Fetch trending guides (excluding current)
-        const { data: trending, error: trendingError } = await supabase
-          .from('guides')
-          .select('id, title, image')
-          .neq('id', id)
-          .limit(3);
-
-        if (!trendingError) setTrendingGuides(trending);
+        const { data: allGuides } = await getGuides();
+        setTrendingGuides((allGuides || []).filter(g => String(g.id) !== String(id)).slice(0, 3));
 
       } catch (error) {
         console.error('Error fetching guide:', error);
