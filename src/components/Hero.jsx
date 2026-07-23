@@ -1,25 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const [query, setQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(query.trim() ? `/explore?q=${encodeURIComponent(query.trim())}` : '/explore');
+  };
+
   return (
     <div className="hero">
       <div className="hero-content">
         <h1>Forage your next adventure</h1>
-        <p>Explore thousands of foraging spots and trails across the USA.</p>
+        <p>Discover coastal foraging spots, check their status, and harvest safely.</p>
 
-        <div className="search-bar">
+        <form className="search-bar" onSubmit={handleSearch}>
           <div className="search-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </div>
-          <input type="text" placeholder="Search by city, park, or trail name" />
-          <button className="btn btn-primary">Search</button>
-        </div>
+          <input
+            type="text"
+            placeholder="Search by spot, region, or catch"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary">Search</button>
+        </form>
       </div>
 
       <style>{`
         .hero {
           height: 500px;
-          background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80');
+          background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url('/coastal_hero.png');
           background-size: cover;
           background-position: center;
           display: flex;

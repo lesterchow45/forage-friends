@@ -1,8 +1,5 @@
 import axios from 'axios';
 
-// National Weather Service API User Agent (Required)
-const USER_AGENT = 'ForageFriends/1.0 (contact@example.com)'; // Replace with real contact if available
-
 /**
  * Fetch weather forecast for a specific latitude and longitude.
  * NWS API requires two steps:
@@ -15,10 +12,10 @@ const USER_AGENT = 'ForageFriends/1.0 (contact@example.com)'; // Replace with re
 export const fetchWeather = async (lat, lon) => {
     try {
         // Step 1: Get Grid Point
+        // Note: browsers forbid setting the User-Agent header from scripts;
+        // the NWS API accepts anonymous browser requests.
         const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
-        const pointsResponse = await axios.get(pointsUrl, {
-            headers: { 'User-Agent': USER_AGENT }
-        });
+        const pointsResponse = await axios.get(pointsUrl);
 
         if (!pointsResponse.data || !pointsResponse.data.properties) {
             throw new Error('Invalid response from NWS Points API');
@@ -27,9 +24,7 @@ export const fetchWeather = async (lat, lon) => {
         const forecastUrl = pointsResponse.data.properties.forecast;
 
         // Step 2: Get Forecast
-        const forecastResponse = await axios.get(forecastUrl, {
-            headers: { 'User-Agent': USER_AGENT }
-        });
+        const forecastResponse = await axios.get(forecastUrl);
 
         return forecastResponse.data.properties.periods;
 

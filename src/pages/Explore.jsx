@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import LocationCard from '../components/LocationCard';
-import { supabase } from '../services/supabaseClient';
+import { getLocations } from '../services/dataService';
 import L from 'leaflet';
 
 // Fix for default marker icon
@@ -93,10 +93,14 @@ const FilterDropdown = ({ label, options, activeValue, onChange }) => {
 const Explore = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState(false);
   const [hoveredLocation, setHoveredLocation] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
   const markerRefs = useRef({});
   const hoverTimeoutRef = useRef(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
 
   // Filter States
   const [statusFilter, setStatusFilter] = useState('All');
@@ -106,18 +110,10 @@ const Explore = () => {
 
   useEffect(() => {
     const fetchLocations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select('*');
-
-        if (error) throw error;
-        setLocations(data);
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-      } finally {
-        setLoading(false);
-      }
+      const { data, offline: usedFallback } = await getLocations();
+      setLocations(data || []);
+      setOffline(usedFallback);
+      setLoading(false);
     };
 
     fetchLocations();
@@ -139,15 +135,28 @@ const Explore = () => {
     let matchesRating = ratingFilter === 'All' || location.rating >= parseFloat(ratingFilter);
     let matchesType = typeFilter === 'All' || (location.tags && location.tags.includes(typeFilter));
 
-    // Apply Map Bounds Filter
+    // Text search (from hero / navbar) matches name, region, catch, and tags
+    let matchesQuery = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const haystack = [
+        location.name,
+        location.region,
+        ...(location.catch || []),
+        ...(location.tags || [])
+      ].join(' ').toLowerCase();
+      matchesQuery = haystack.includes(q);
+    }
+
+    // Apply Map Bounds Filter (skipped while searching, so distant matches still show)
     let matchesBounds = true;
-    if (mapBounds && location.coordinates) {
+    if (!searchQuery && mapBounds && location.coordinates) {
       const lat = location.coordinates[0];
       const lng = location.coordinates[1];
       matchesBounds = mapBounds.contains([lat, lng]);
     }
 
-    return matchesStatus && matchesSeason && matchesRating && matchesBounds && matchesType;
+    return matchesStatus && matchesSeason && matchesRating && matchesBounds && matchesType && matchesQuery;
   });
 
   return (
@@ -165,7 +174,7 @@ const Explore = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapEvents setBounds={setMapBounds} />
-          {filteredLocations.map(location => (
+          {filteredLocations.filter(l => l.coordinates).map(location => (
             <Marker
               key={location.id}
               position={location.coordinates}
@@ -208,7 +217,7 @@ const Explore = () => {
           <div className="filters-row">
             <FilterDropdown
               label="Status"
-              options={['Open', 'Closed']}
+              options={['Open', 'Restricted', 'Observation Only', 'Closed']}
               activeValue={statusFilter}
               onChange={setStatusFilter}
             />
@@ -231,13 +240,22 @@ const Explore = () => {
               onChange={setRatingFilter}
             />
           </div>
+          {searchQuery && (
+            <div className="search-chip">
+              <span>Search: “{searchQuery}”</span>
+              <button onClick={() => setSearchParams({})} aria-label="Clear search">✕</button>
+            </div>
+          )}
           <div className="results-count">
-            {filteredLocations.length} results in view
+            {loading ? 'Loading spots…' : `${filteredLocations.length} result${filteredLocations.length === 1 ? '' : 's'}${searchQuery ? '' : ' in view'}`}
+            {offline && !loading && <span className="offline-note"> • showing built-in data</span>}
           </div>
         </div>
 
         <div className="locations-list">
-          {filteredLocations.length > 0 ? (
+          {loading ? (
+            [...Array(3)].map((_, i) => <div key={i} className="skeleton-card" />)
+          ) : filteredLocations.length > 0 ? (
             filteredLocations.map(location => (
               <div
                 key={location.id}
@@ -380,6 +398,45 @@ const Explore = () => {
           margin-top: 16px;
           font-size: 0.85rem;
           color: var(--color-text-light);
+        }
+        .offline-note {
+          color: #b26a00;
+        }
+
+        .search-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 12px;
+          background: #e8f5e9;
+          color: var(--color-primary);
+          border: 1px solid var(--color-primary);
+          border-radius: 20px;
+          padding: 6px 12px;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+        .search-chip button {
+          background: none;
+          border: none;
+          color: inherit;
+          cursor: pointer;
+          font-size: 0.85rem;
+          line-height: 1;
+          padding: 2px;
+        }
+
+        .skeleton-card {
+          height: 320px;
+          border-radius: var(--radius-lg);
+          background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite;
+          flex-shrink: 0;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
 
         /* List */

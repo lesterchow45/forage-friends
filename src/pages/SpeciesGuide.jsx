@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSpecies } from '../services/dataService';
 
 const SpeciesGuide = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,26 +8,17 @@ const SpeciesGuide = () => {
 
   useEffect(() => {
     const fetchSpecies = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('species')
-          .select('*');
-
-        if (error) throw error;
-        setSpecies(data);
-      } catch (error) {
-        console.error('Error fetching species:', error);
-      } finally {
-        setLoading(false);
-      }
+      const { data } = await getSpecies();
+      setSpecies(data || []);
+      setLoading(false);
     };
 
     fetchSpecies();
   }, []);
 
   const filteredSpecies = species.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.scientific_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.scientific_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -48,7 +39,10 @@ const SpeciesGuide = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-md">
-        {filteredSpecies.map(item => (
+        {loading && [...Array(6)].map((_, i) => (
+          <div key={`s-${i}`} className="species-card" style={{ height: '420px', background: '#f4f4f4', border: 'none' }} />
+        ))}
+        {!loading && filteredSpecies.map(item => (
           <div key={item.id} className="species-card">
             <div className="species-image">
               <img src={item.image} alt={item.name} />
@@ -57,7 +51,7 @@ const SpeciesGuide = () => {
             <div className="species-content">
               <div className="species-header">
                 <h3>{item.name}</h3>
-                <span className="scientific-name">{item.scientificName}</span>
+                <span className="scientific-name">{item.scientific_name}</span>
               </div>
 
               <div className="species-info">

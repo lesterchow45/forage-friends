@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../services/supabaseClient';
+import { getGuides } from '../services/dataService';
 
 const Guides = () => {
     const [guides, setGuides] = useState([]);
@@ -8,18 +8,9 @@ const Guides = () => {
 
     useEffect(() => {
         const fetchGuides = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('guides')
-                    .select('*');
-
-                if (error) throw error;
-                setGuides(data);
-            } catch (error) {
-                console.error('Error fetching guides:', error);
-            } finally {
-                setLoading(false);
-            }
+            const { data } = await getGuides();
+            setGuides(data || []);
+            setLoading(false);
         };
 
         fetchGuides();

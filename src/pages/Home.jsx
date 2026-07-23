@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Hero from '../components/Hero';
 import LocationCard from '../components/LocationCard';
-import { supabase } from '../services/supabaseClient';
+import { getLocations, getGuides } from '../services/dataService';
 
 const Home = () => {
   const [locationName, setLocationName] = useState(null);
@@ -36,34 +36,18 @@ const Home = () => {
     }
 
     const fetchData = async () => {
-      try {
-        const { data: locationsData, error: locationsError } = await supabase
-          .from('locations')
-          .select('*')
-          .limit(4);
-
-        if (locationsError) throw locationsError;
-        setFeaturedLocations(locationsData);
-
-        const { data: guidesData, error: guidesError } = await supabase
-          .from('guides')
-          .select('*');
-
-        if (guidesError) throw guidesError;
-        setGuides(guidesData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
+      const [{ data: locationsData }, { data: guidesData }] = await Promise.all([
+        getLocations(),
+        getGuides()
+      ]);
+      const sorted = [...(locationsData || [])].sort((a, b) => (b.reviews || 0) - (a.reviews || 0));
+      setFeaturedLocations(sorted.slice(0, 4));
+      setGuides((guidesData || []).slice(0, 3));
+      setLoading(false);
     };
 
     fetchData();
   }, []);
-
-  if (loading) {
-    return <div className="container" style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>;
-  }
 
   return (
     <div className="home-page">
@@ -72,19 +56,48 @@ const Home = () => {
       <section className="section container">
         <div className="section-header">
           <h2>Trending foraging spots{locationName ? ` near ${locationName}` : ''}</h2>
-          <a href="/explore" className="view-all">View all</a>
+          <Link to="/explore" className="view-all">View all</Link>
         </div>
         <div className="grid grid-cols-4 gap-md">
-          {featuredLocations.map(location => (
-            <LocationCard key={location.id} location={location} />
-          ))}
+          {loading
+            ? [...Array(4)].map((_, i) => <div key={i} className="skeleton-card" />)
+            : featuredLocations.map(location => (
+              <LocationCard key={location.id} location={location} />
+            ))}
         </div>
       </section>
 
-      <section className="section container" style={{ marginTop: '64px' }}>
+      <section className="section container know-section">
+        <div className="know-banner">
+          <div className="know-text">
+            <h2>Know before you go</h2>
+            <p>Every coastal spot has its own rules — licenses, bag limits, marine protected areas, and biotoxin closures that change weekly. Foraging safely starts with checking the status.</p>
+          </div>
+          <div className="know-cards">
+            <div className="know-card">
+              <span className="know-icon">📋</span>
+              <h4>Check the regulations</h4>
+              <p>Each location page links to the official state rules for that exact spot.</p>
+            </div>
+            <div className="know-card">
+              <span className="know-icon">🌊</span>
+              <h4>Watch tides &amp; toxins</h4>
+              <p>Live tide schedules and toxin status so you know when it's safe to harvest.</p>
+            </div>
+            <div className="know-card">
+              <span className="know-icon">🌱</span>
+              <h4>Harvest sustainably</h4>
+              <p>Take less than you find, and leave the habitat as you found it.</p>
+            </div>
+          </div>
+          <Link to="/foraging-101" className="btn btn-primary know-cta">Start with Foraging 101</Link>
+        </div>
+      </section>
+
+      <section className="section container">
         <div className="section-header">
           <h2>Foraging Guides</h2>
-          <a href="/species" className="view-all">View all</a>
+          <Link to="/guides" className="view-all">View all</Link>
         </div>
         <div className="grid grid-cols-3 gap-md">
           {guides.map(guide => (
@@ -122,7 +135,70 @@ const Home = () => {
         .view-all:hover {
           text-decoration: underline;
         }
-        
+
+        .skeleton-card {
+          height: 340px;
+          border-radius: var(--radius-lg);
+          background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
+        .know-section {
+          margin-top: 64px;
+        }
+        .know-banner {
+          background: linear-gradient(135deg, #f3f8ee 0%, #e8f5e9 100%);
+          border-radius: 24px;
+          padding: 48px;
+          text-align: center;
+        }
+        .know-text h2 {
+          margin-bottom: 12px;
+        }
+        .know-text p {
+          color: var(--color-text-light);
+          max-width: 640px;
+          margin: 0 auto 32px;
+          font-size: 1.05rem;
+          line-height: 1.6;
+        }
+        .know-cards {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+          margin-bottom: 32px;
+          text-align: left;
+        }
+        .know-card {
+          background: white;
+          border-radius: var(--radius-lg);
+          padding: 24px;
+          box-shadow: var(--shadow-card);
+        }
+        .know-icon {
+          font-size: 1.75rem;
+          display: block;
+          margin-bottom: 12px;
+        }
+        .know-card h4 {
+          margin-bottom: 8px;
+          font-size: 1.05rem;
+        }
+        .know-card p {
+          color: var(--color-text-light);
+          font-size: 0.92rem;
+          line-height: 1.5;
+        }
+        @media (max-width: 768px) {
+          .know-banner { padding: 32px 20px; }
+          .know-cards { grid-template-columns: 1fr; }
+        }
+
         .guide-card {
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);

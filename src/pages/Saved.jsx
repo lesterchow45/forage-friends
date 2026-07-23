@@ -10,34 +10,32 @@ const Saved = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        if (user) {
-            fetchSavedLocations();
-        } else {
+        if (!user) {
             setLoading(false);
+            return;
         }
-    }, [user]);
-
-    const fetchSavedLocations = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('saved_locations')
-                .select(`
+        const fetchSavedLocations = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('saved_locations')
+                    .select(`
           location_id,
           locations:location_id (*)
         `)
-                .eq('user_id', user.id);
+                    .eq('user_id', user.id);
 
-            if (error) throw error;
+                if (error) throw error;
 
-            // Transform data to get just the location objects
-            const locations = data.map(item => item.locations);
-            setSavedLocations(locations);
-        } catch (error) {
-            console.error('Error fetching saved locations:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+                // Transform data to get just the location objects
+                setSavedLocations(data.map(item => item.locations).filter(Boolean));
+            } catch (error) {
+                console.error('Error fetching saved locations:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSavedLocations();
+    }, [user]);
 
     if (!user) {
         return (
